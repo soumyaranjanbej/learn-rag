@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Pipeline Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0c11;
+    --surface:#12151d;
+    --surface-2:#181c27;
+    --surface-3:#20242f;
+    --border:#272c39;
+    --border-soft:#1c2029;
+    --text:#e9ebf3;
+    --text-muted:#8b93a8;
+    --text-dim:#5c6478;
+    --primary:#7c6df2;
+    --primary-soft:rgba(124,109,242,0.14);
+    --accent:#33d6c0;
+    --accent-soft:rgba(51,214,192,0.14);
+    --warn:#f2b705;
+    --rose:#f2607c;
+    --radius:12px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0; padding:0;}
+  body{
+    background:
+      radial-gradient(900px 500px at 15% -10%, rgba(124,109,242,0.13), transparent 60%),
+      radial-gradient(700px 500px at 100% 0%, rgba(51,214,192,0.09), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .wrap{ max-width:1120px; margin:0 auto; padding:36px 24px 80px; }
+
+  /* ---------- header ---------- */
+  header.top{ margin-bottom:28px; }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--accent); margin-bottom:10px; display:flex; align-items:center; gap:8px;
+  }
+  .eyebrow::before{ content:""; width:7px; height:7px; background:var(--accent); border-radius:50%; box-shadow:0 0 10px var(--accent);}
+  h1{
+    font-family:'Sora', sans-serif; font-weight:800; font-size:32px; letter-spacing:-0.01em;
+    margin:0 0 10px; line-height:1.15;
+  }
+  h1 span{ color:var(--primary); }
+  .sub{ color:var(--text-muted); font-size:14.5px; max-width:66ch; line-height:1.6; }
+
+  .info-toggle{
+    margin-top:14px; display:inline-flex; align-items:center; gap:6px;
+    font-size:12.5px; color:var(--text-muted); background:none; border:1px solid var(--border);
+    padding:6px 12px; border-radius:20px; cursor:pointer; font-family:'Inter',sans-serif;
+    transition:border-color .15s, color .15s;
+  }
+  .info-toggle:hover{ border-color:var(--primary); color:var(--text); }
+  .info-panel{
+    display:none; margin-top:14px; padding:14px 16px; background:var(--surface);
+    border:1px solid var(--border); border-left:3px solid var(--primary); border-radius:8px;
+    font-size:13px; line-height:1.65; color:var(--text-muted);
+  }
+  .info-panel.show{ display:block; }
+  .info-panel b{ color:var(--text); }
+
+  /* ---------- controls ---------- */
+  .controls{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:20px 22px; margin-bottom:26px;
+  }
+  .controls-row{ display:flex; gap:12px; flex-wrap:wrap; align-items:flex-end; }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field label{
+    font-family:'JetBrains Mono', monospace; font-size:10.5px; letter-spacing:0.08em;
+    text-transform:uppercase; color:var(--text-dim);
+  }
+  .query-field{ flex:1 1 320px; }
+  input[type="text"]{
+    background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+    padding:11px 14px; border-radius:8px; font-size:14px; font-family:'Inter',sans-serif;
+    width:100%; outline:none; transition:border-color .15s, box-shadow .15s;
+  }
+  input[type="text"]:focus{ border-color:var(--primary); box-shadow:0 0 0 3px var(--primary-soft); }
+  select, input[type="number"]{
+    background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+    padding:10px 12px; border-radius:8px; font-size:13px; font-family:'Inter',sans-serif; outline:none;
+  }
+  .btn{
+    font-family:'Inter',sans-serif; font-weight:600; font-size:13.5px; cursor:pointer;
+    border:none; border-radius:8px; padding:11px 20px; transition:transform .1s, opacity .15s, box-shadow .15s;
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn-primary{ background:linear-gradient(135deg, var(--primary), #5b4bd8); color:#fff; box-shadow:0 4px 18px rgba(124,109,242,0.35); }
+  .btn-primary:hover{ box-shadow:0 6px 22px rgba(124,109,242,0.5); }
+  .btn-ghost{ background:var(--surface-2); color:var(--text-muted); border:1px solid var(--border); }
+  .btn-ghost:hover{ color:var(--text); border-color:var(--text-dim); }
+  .btn:disabled{ opacity:0.4; cursor:not-allowed; box-shadow:none; }
+
+  .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+  .chip{
+    font-family:'JetBrains Mono', monospace; font-size:11.5px; color:var(--text-muted);
+    background:var(--surface-2); border:1px solid var(--border-soft); padding:7px 12px;
+    border-radius:20px; cursor:pointer; transition:all .15s;
+  }
+  .chip:hover{ border-color:var(--accent); color:var(--text); background:var(--accent-soft); }
+
+  /* ---------- stepper ---------- */
+  .stepper{
+    display:flex; align-items:center; margin:30px 0 22px; overflow-x:auto; padding-bottom:4px;
+  }
+  .step-pill{
+    display:flex; align-items:center; gap:9px; padding:9px 14px 9px 10px; border-radius:22px;
+    background:var(--surface); border:1px solid var(--border); cursor:pointer; white-space:nowrap;
+    transition:all .15s; flex-shrink:0;
+  }
+  .step-pill .num{
+    width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono', monospace; font-size:11px; font-weight:600;
+    background:var(--surface-3); color:var(--text-dim); flex-shrink:0;
+  }
+  .step-pill .label{ font-size:12.5px; color:var(--text-dim); font-weight:500; }
+  .step-pill.locked{ cursor:not-allowed; opacity:0.55; }
+  .step-pill.active{ border-color:var(--primary); background:var(--primary-soft); }
+  .step-pill.active .num{ background:var(--primary); color:#fff; }
+  .step-pill.active .label{ color:var(--text); }
+  .step-pill.done .num{ background:var(--accent); color:#06201c; }
+  .step-pill.done .label{ color:var(--text-muted); }
+  .step-connector{ width:22px; height:1px; background:var(--border); flex-shrink:0; }
+
+  /* ---------- stage panel ---------- */
+  .panel{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:26px 26px 22px; min-height:340px; animation:fadeIn .35s ease;
+  }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+  .panel h2{ font-family:'Sora', sans-serif; font-size:19px; margin:0 0 6px; }
+  .panel .caption{ color:var(--text-muted); font-size:13.5px; line-height:1.6; margin-bottom:22px; max-width:74ch; }
+  .placeholder{ color:var(--text-dim); font-size:13.5px; padding:40px 0; text-align:center; }
+
+  /* doc / chunk cards */
+  .doc-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:14px; }
+  .doc-card{
+    background:var(--surface-2); border:1px solid var(--border-soft); border-radius:10px;
+    padding:14px 16px; border-top:3px solid var(--doc-color, var(--primary));
+  }
+  .doc-card .doc-title{ font-weight:600; font-size:13.5px; margin-bottom:8px; color:var(--text); }
+  .doc-card .doc-text{ font-size:12px; line-height:1.6; color:var(--text-muted); }
+  .doc-card .chunk-list{ margin-top:10px; display:flex; flex-direction:column; gap:6px; }
+  .chunk-tag{
+    font-size:11.5px; line-height:1.55; padding:7px 9px; border-radius:6px;
+    background:var(--surface-3); border-left:2px solid var(--doc-color, var(--primary)); color:var(--text-muted);
+  }
+  .chunk-tag .cid{ font-family:'JetBrains Mono', monospace; font-size:9.5px; color:var(--text-dim); margin-right:6px; }
+
+  /* vector fingerprint */
+  .vec-row{ display:flex; align-items:center; gap:10px; margin-bottom:8px; flex-wrap:wrap; }
+  .vec-dots{ display:flex; gap:2px; }
+  .vec-dot{ width:7px; height:16px; border-radius:2px; background:var(--surface-3); }
+
+  /* scatter */
+  .scatter-wrap{ display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; }
+  .scatter-box{
+    background:var(--surface-2); border:1px solid var(--border-soft); border-radius:10px; padding:12px;
+    flex:1 1 380px; min-width:300px;
+  }
+  .legend{ display:flex; flex-direction:column; gap:8px; flex:0 0 200px; }
+  .legend-item{ display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-muted); }
+  .legend-dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+  .legend-item.query .legend-dot{ border-radius:2px; transform:rotate(45deg); }
+
+  /* ranked list */
+  .rank-list{ display:flex; flex-direction:column; gap:10px; }
+  .rank-item{
+    background:var(--surface-2); border:1px solid var(--border-soft); border-radius:8px;
+    padding:12px 14px; position:relative; overflow:hidden;
+  }
+  .rank-item.top{ border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset; }
+  .rank-top{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:6px; }
+  .rank-doc{ font-size:11.5px; font-weight:600; color:var(--text); display:flex; align-items:center; gap:7px; }
+  .rank-doc .dot{ width:8px; height:8px; border-radius:50%; }
+  .rank-score{ font-family:'JetBrains Mono', monospace; font-size:12px; color:var(--accent); }
+  .rank-bar-bg{ height:5px; background:var(--surface-3); border-radius:4px; overflow:hidden; margin-bottom:8px; }
+  .rank-bar-fill{ height:100%; background:linear-gradient(90deg, var(--primary), var(--accent)); border-radius:4px; transition:width .5s ease; }
+  .rank-text{ font-size:12px; color:var(--text-muted); line-height:1.55; }
+  .badge{
+    font-family:'JetBrains Mono', monospace; font-size:9.5px; letter-spacing:0.05em; text-transform:uppercase;
+    background:var(--accent-soft); color:var(--accent); padding:2px 8px; border-radius:10px; margin-left:8px;
+  }
+
+  /* code block */
+  .code-block{
+    background:#080a0f; border:1px solid var(--border-soft); border-radius:10px; padding:18px 20px;
+    font-family:'JetBrains Mono', monospace; font-size:12px; line-height:1.8; color:#c7cbe0;
+    white-space:pre-wrap; word-break:break-word; max-height:420px; overflow-y:auto;
+  }
+  .code-block .tag{ color:var(--accent); }
+  .code-block .ctx{ color:var(--warn); }
+  .code-block .q{ color:var(--primary); font-weight:600;}
+  .code-block .src{ color:var(--text-dim); }
+
+  /* answer */
+  .answer-box{
+    background:var(--surface-2); border:1px solid var(--border-soft); border-radius:10px; padding:18px 20px;
+    font-size:14px; line-height:1.75; color:var(--text);
+  }
+  .answer-box .sim-tag{
+    font-family:'JetBrains Mono', monospace; font-size:10px; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--warn); background:rgba(242,183,5,0.12); padding:4px 10px; border-radius:6px;
+    display:inline-block; margin-bottom:12px;
+  }
+  .answer-box .cite{ color:var(--accent); font-size:11px; vertical-align:super; }
+  .sources{ margin-top:16px; padding-top:14px; border-top:1px dashed var(--border); font-size:12px; color:var(--text-muted); }
+  .sources div{ margin-bottom:4px; }
+
+  /* nav footer */
+  .stage-nav{ display:flex; justify-content:space-between; align-items:center; margin-top:18px; }
+  .stage-nav .step-caption{ font-size:12px; color:var(--text-dim); font-family:'JetBrains Mono', monospace; }
+
+  ::-webkit-scrollbar{ height:8px; width:8px; }
+  ::-webkit-scrollbar-thumb{ background:var(--border); border-radius:4px; }
+
+  @media (max-width:640px){
+    h1{ font-size:25px; }
+    .controls-row{ flex-direction:column; align-items:stretch; }
+    .scatter-wrap{ flex-direction:column; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="eyebrow">RAG Pipeline Simulator</div>
+    <h1>Watch a question become an <span>answer</span>, step by step.</h1>
+    <p class="sub">Type a question about a small demo knowledge base and run it through every stage of Retrieval-Augmented Generation — chunking, embedding, retrieval, prompt augmentation, and generation — with the underlying math made visible at each step.</p>
+    <button class="info-toggle" id="infoToggle" onclick="toggleInfo()">ⓘ How faithful is this simulation?</button>
+    <div class="info-panel" id="infoPanel">
+      This runs entirely in your browser, so it can't call a real embedding model or LLM. Instead: <b>embeddings</b> are simulated with TF‑IDF vectors (word-frequency math you can actually see), and <b>generation</b> is simulated by extracting the most relevant sentences from the retrieved chunks rather than an LLM writing fluent prose. Real systems use dense neural embeddings (which also capture meaning for synonyms and related concepts, not just exact word overlap) and a real language model for generation — but every <i>stage</i> of the pipeline, and the logic connecting them, is accurate.
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="controls-row">
+      <div class="field query-field">
+        <label for="queryInput">Your question</label>
+        <input type="text" id="queryInput" placeholder="e.g. How many days can I work from home?">
+      </div>
+      <div class="field">
+        <label for="chunkSize">Chunk size</label>
+        <select id="chunkSize">
+          <option value="1">Small — 1 sentence</option>
+          <option value="2" selected>Medium — 2 sentences</option>
+          <option value="3">Large — 3 sentences</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="topK">Top‑K retrieved</label>
+        <input type="number" id="topK" min="1" max="5" value="3" style="width:70px;">
+      </div>
+      <div class="field">
+        <button class="btn btn-primary" id="runBtn" onclick="runPipeline()">Run pipeline →</button>
+      </div>
+      <div class="field">
+        <button class="btn btn-ghost" onclick="resetPipeline()">Reset</button>
+      </div>
+    </div>
+    <div class="chips" id="exampleChips"></div>
+  </div>
+
+  <nav class="stepper" id="stepper"></nav>
+
+  <main class="panel" id="stagePanel">
+    <div class="placeholder">Enter a question above and click <b style="color:var(--text)">Run pipeline</b> to begin.</div>
+  </main>
+
+  <div class="stage-nav">
+    <button class="btn btn-ghost" id="prevBtn" onclick="goStage(-1)" disabled>← Back</button>
+    <span class="step-caption" id="stepCaption"></span>
+    <button class="btn btn-ghost" id="nextBtn" onclick="goStage(1)" disabled>Next →</button>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   DEMO KNOWLEDGE BASE
+   ============================================================ */
+const CORPUS = [
+  { id:'d1', title:'Remote Work Policy', text:"Northwind Cloud employees may work remotely up to three days per week. Full-time office attendance is required on Tuesdays and Thursdays for team collaboration. Managers can approve additional remote days for employees who relocate more than fifty miles from the nearest office. All remote work requires a stable internet connection and access to the company VPN. Employees working remotely for more than two consecutive weeks must notify HR in advance. Equipment requests for home office setup are reimbursed up to five hundred dollars annually." },
+  { id:'d2', title:'Expense Reimbursement Policy', text:"All business expenses must be submitted within thirty days of purchase through the Northwind expense portal. Receipts are required for any expense over twenty five dollars. Travel bookings should be made through the approved corporate travel partner whenever possible. Client meals are reimbursable up to seventy five dollars per person with manager approval. Reimbursements are processed within two payroll cycles after submission. Personal expenses, alcohol at non-client events, and first class flights are not reimbursable." },
+  { id:'d3', title:'API Rate Limits', text:"The Northwind Cloud telemetry API allows one thousand requests per minute per API key on the standard tier. Enterprise tier customers receive a limit of ten thousand requests per minute. Exceeding the rate limit returns a 429 status code with a Retry-After header indicating the wait time in seconds. Burst traffic is allowed up to twice the sustained limit for periods under ten seconds. Rate limit usage can be monitored in real time through the developer dashboard. Contact support to request a temporary limit increase during planned load tests." },
+  { id:'d4', title:'Device Onboarding Guide', text:"New IoT devices are provisioned by registering their serial number in the Northwind Cloud fleet console. Each device requires a unique security certificate generated during the provisioning step. After registration, devices automatically receive their configuration profile on first connection. Devices that fail to check in within twenty four hours are flagged as provisioning incomplete. Firmware updates are pushed automatically once a device joins its assigned device group. Field technicians should confirm signal strength before finalizing installation." },
+  { id:'d5', title:'Data Retention Policy', text:"Raw telemetry data from connected devices is retained for ninety days in hot storage. Aggregated hourly summaries are retained for three years for reporting and compliance purposes. Customers may request early deletion of their data by submitting a request through the privacy portal. Deleted data is purged from backups within thirty days of the deletion request. Data retention periods may be extended when required by regulatory obligations. Archived data is encrypted at rest using industry standard encryption." },
+  { id:'d6', title:'Incident Response Runbook', text:"If more than five percent of a fleet goes offline simultaneously, the on-call engineer must declare a Severity 2 incident. The on-call engineer should first check the status page for known upstream outages. Device connectivity can be diagnosed using the fleet health dashboard filtered by region. If the outage is confirmed as platform side, the incident commander notifies affected customers within thirty minutes. A post incident review is required within five business days for any Severity 1 or Severity 2 event. Rollback procedures should be initiated if a recent deployment is suspected as the cause." }
+];
+const DOC_COLORS = { d1:'#7c6df2', d2:'#33d6c0', d3:'#f2b705', d4:'#f2607c', d5:'#68d391', d6:'#4dabf7' };
+
+const EXAMPLE_QUERIES = [
+  "How many days can I work from home?",
+  "What happens if I exceed the API rate limit?",
+  "How long is telemetry data kept?",
+  "What should the on-call engineer do if devices go offline?"
+];
+
+const STOPWORDS = new Set(["the","a","an","is","are","was","were","to","of","in","on","for","and","or","with","what","how","do","does","did","i","my","me","need","needs","be","if","should","this","that","it","as","at","by","from","will","would","can","could","you","your","up","per","within","more","than","must","may","also"]);
+
+/* ============================================================
+   TEXT UTILITIES
+   ============================================================ */
+function splitSentences(text){
+  return text.match(/[^.!?]+[.!?]?/g).map(s=>s.trim()).filter(Boolean);
+}
+function tokenize(text){
+  const clean = text.toLowerCase().replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+  if(!clean) return [];
+  return clean.split(' ').filter(t=>t && !STOPWORDS.has(t));
+}
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+/* ============================================================
+   CHUNKING
+   ============================================================ */
+function buildChunks(sentencesPerChunk){
+  const chunks = [];
+  CORPUS.forEach(doc=>{
+    const sentences = splitSentences(doc.text);
+    for(let i=0;i<sentences.length;i+=sentencesPerChunk){
+      const group = sentences.slice(i, i+sentencesPerChunk).join(' ');
+      chunks.push({
+        id: doc.id + '-' + (chunks.filter(c=>c.docId===doc.id).length),
+        docId: doc.id,
+        docTitle: doc.title,
+        text: group
+      });
+    }
+  });
+  return chunks;
+}
+
+/* ============================================================
+   TF-IDF VECTORS
+   ============================================================ */
+function buildVocabAndIDF(chunks){
+  const df = {};
+  const tokensByChunk = chunks.map(c=>tokenize(c.text));
+  tokensByChunk.forEach(toks=>{
+    new Set(toks).forEach(t=>{ df[t] = (df[t]||0)+1; });
+  });
+  const vocab = Object.keys(df).sort();
+  const N = chunks.length;
+  const idf = {};
+  vocab.forEach(t=>{ idf[t] = Math.log(N/(1+df[t])) + 1; });
+  return { vocab, idf, tokensByChunk };
+}
+function vectorFromTokens(tokens, vocab, idf){
+  const counts = {};
+  tokens.forEach(t=>{ counts[t] = (counts[t]||0)+1; });
+  const len = tokens.length || 1;
+  return vocab.map(t=>{
+    if(!counts[t]) return 0;
+    const tf = counts[t]/len;
+    return tf * (idf[t]||0);
+  });
+}
+function cosineSim(a,b){
+  let dot=0, na=0, nb=0;
+  for(let i=0;i<a.length;i++){ dot += a[i]*b[i]; na += a[i]*a[i]; nb += b[i]*b[i]; }
+  if(na===0 || nb===0) return 0;
+  return dot / (Math.sqrt(na)*Math.sqrt(nb));
+}
+
+/* ============================================================
+   SEEDED 2D PROJECTION (for the vector-space visual)
+   ============================================================ */
+function hashStr(str){
+  let h = 2166136261;
+  for(let i=0;i<str.length;i++){
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+function mulberry32(seed){
+  let s = seed;
+  return function(){
+    s |= 0; s = (s + 0x6D2B79F5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const projCache = {};
+function termProjection(term){
+  if(projCache[term]) return projCache[term];
+  const rand = mulberry32(hashStr(term));
+  const p = [rand()*2-1, rand()*2-1];
+  projCache[term] = p;
+  return p;
+}
+function project2D(vec, vocab){
+  let x=0, y=0;
+  for(let i=0;i<vocab.length;i++){
+    if(vec[i]===0) continue;
+    const p = termProjection(vocab[i]);
+    x += vec[i]*p[0];
+    y += vec[i]*p[1];
+  }
+  return [x,y];
+}
+
+/* ============================================================
+   PIPELINE STATE
+   ============================================================ */
+const STAGES = [
+  { key:'ingest', label:'Ingest & Chunk', caption:'Long source documents are broken into small, retrievable passages called chunks.' },
+  { key:'embed', label:'Embed', caption:'Each chunk is converted into a numeric vector that represents its meaning as a point in space.' },
+  { key:'query', label:'Query', caption:'The user question is converted into a vector the exact same way, so it can be compared to the chunks.' },
+  { key:'retrieve', label:'Retrieve', caption:'Cosine similarity ranks every chunk against the query vector; the top‑K closest chunks are selected.' },
+  { key:'augment', label:'Augment', caption:'Retrieved chunks are inserted into a prompt template alongside the original question.' },
+  { key:'generate', label:'Generate', caption:'The augmented prompt is sent to the language model, which answers using only the retrieved context.' }
+];
+
+let state = {
+  ran:false,
+  currentStage:0,
+  maxUnlocked:0,
+  chunks:[], vocab:[], idf:{}, chunkVectors:[], chunkPoints:[],
+  query:'', queryTokens:[], queryVector:[], queryPoint:[0,0],
+  ranked:[], topK:3
+};
+
+/* ============================================================
+   RUN PIPELINE
+   ============================================================ */
+function runPipeline(){
+  const q = document.getElementById('queryInput').value.trim();
+  if(!q){ document.getElementById('queryInput').focus(); return; }
+
+  const sentencesPerChunk = parseInt(document.getElementById('chunkSize').value, 10);
+  let topK = parseInt(document.getElementById('topK').value, 10);
+  if(isNaN(topK) || topK<1) topK = 1;
+
+  const chunks = buildChunks(sentencesPerChunk);
+  const { vocab, idf } = buildVocabAndIDF(chunks);
+  const chunkVectors = chunks.map(c=> vectorFromTokens(tokenize(c.text), vocab, idf));
+  const chunkPoints = chunkVectors.map(v=> project2D(v, vocab));
+
+  const queryTokens = tokenize(q);
+  const queryVector = vectorFromTokens(queryTokens, vocab, idf);
+  const queryPoint = project2D(queryVector, vocab);
+
+  const ranked = chunks.map((c,i)=>({
+    chunk:c, score: cosineSim(queryVector, chunkVectors[i]), point: chunkPoints[i]
+  })).sort((a,b)=> b.score - a.score);
+
+  topK = Math.min(topK, ranked.length);
+  ranked.forEach((r,i)=>{ r.rank = i; r.isTop = i < topK; });
+
+  state = { ran:true, currentStage:0, maxUnlocked:0,
+    chunks, vocab, idf, chunkVectors, chunkPoints,
+    query:q, queryTokens, queryVector, queryPoint,
+    ranked, topK };
+
+  renderStepper();
+  goToStage(0, true);
+}
+
+function resetPipeline(){
+  document.getElementById('queryInput').value = '';
+  state = { ran:false, currentStage:0, maxUnlocked:0,
+    chunks:[], vocab:[], idf:{}, chunkVectors:[], chunkPoints:[],
+    query:'', queryTokens:[], queryVector:[], queryPoint:[0,0],
+    ranked:[], topK:3 };
+  renderStepper();
+  document.getElementById('stagePanel').innerHTML = '<div class="placeholder">Enter a question above and click <b style="color:var(--text)">Run pipeline</b> to begin.</div>';
+  document.getElementById('prevBtn').disabled = true;
+  document.getElementById('nextBtn').disabled = true;
+  document.getElementById('stepCaption').textContent = '';
+}
+
+/* ============================================================
+   STEPPER
+   ============================================================ */
+function renderStepper(){
+  const el = document.getElementById('stepper');
+  let html = '';
+  STAGES.forEach((s,i)=>{
+    const locked = !state.ran || i > state.maxUnlocked;
+    const active = state.ran && i === state.currentStage;
+    const done = state.ran && i < state.currentStage;
+    let cls = 'step-pill';
+    if(locked) cls += ' locked';
+    if(active) cls += ' active';
+    if(done) cls += ' done';
+    html += `<div class="${cls}" onclick="${locked ? '' : 'goToStage('+i+')'}">
+      <span class="num">${done ? '✓' : i+1}</span>
+      <span class="label">${s.label}</span>
+    </div>`;
+    if(i < STAGES.length-1) html += '<div class="step-connector"></div>';
+  });
+  el.innerHTML = html;
+}
+
+function goStage(delta){
+  const next = state.currentStage + delta;
+  if(next < 0 || next > state.maxUnlocked) return;
+  goToStage(next);
+}
+
+function goToStage(i, unlockAll){
+  state.currentStage = i;
+  if(unlockAll){ state.maxUnlocked = STAGES.length - 1; }
+  else if(i > state.maxUnlocked){ state.maxUnlocked = i; }
+  renderStepper();
+  renderStage(i);
+  document.getElementById('prevBtn').disabled = (i===0);
+  document.getElementById('nextBtn').disabled = (i===STAGES.length-1);
+  document.getElementById('stepCaption').textContent = `Step ${i+1} of ${STAGES.length} — ${STAGES[i].label}`;
+  document.getElementById('stagePanel').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+/* ============================================================
+   STAGE RENDERERS
+   ============================================================ */
+function renderStage(i){
+  const panel = document.getElementById('stagePanel');
+  const s = STAGES[i];
+  let body = '';
+  if(s.key==='ingest') body = renderIngest();
+  else if(s.key==='embed') body = renderEmbed();
+  else if(s.key==='query') body = renderQuery();
+  else if(s.key==='retrieve') body = renderRetrieve();
+  else if(s.key==='augment') body = renderAugment();
+  else if(s.key==='generate') body = renderGenerate();
+
+  panel.innerHTML = `<h2>${i+1}. ${s.label}</h2><p class="caption">${s.caption}</p>${body}`;
+}
+
+function renderIngest(){
+  let html = '<div class="doc-grid">';
+  CORPUS.forEach(doc=>{
+    const docChunks = state.chunks.filter(c=>c.docId===doc.id);
+    html += `<div class="doc-card" style="--doc-color:${DOC_COLORS[doc.id]}">
+      <div class="doc-title">${escapeHtml(doc.title)}</div>
+      <div class="chunk-list">`;
+    docChunks.forEach(c=>{
+      html += `<div class="chunk-tag"><span class="cid">${c.id}</span>${escapeHtml(c.text)}</div>`;
+    });
+    html += `</div></div>`;
+  });
+  html += '</div>';
+  html += `<p class="caption" style="margin-top:18px; margin-bottom:0;">${state.chunks.length} chunks were created from ${CORPUS.length} documents (${document.getElementById('chunkSize').selectedOptions[0].text.toLowerCase()} per chunk). Smaller chunks retrieve more precisely; larger chunks preserve more surrounding context.</p>`;
+  return html;
+}
+
+function vectorFingerprintHTML(vec){
+  const shown = vec.slice(0, 24);
+  const max = Math.max(...vec, 0.0001);
+  let dots = '';
+  shown.forEach(v=>{
+    const h = Math.max(2, Math.round((v/max)*16));
+    const op = v>0 ? 0.35 + 0.65*(v/max) : 0.15;
+    dots += `<div class="vec-dot" style="height:${h}px; background:var(--primary); opacity:${op.toFixed(2)}"></div>`;
+  });
+  return `<div class="vec-dots">${dots}</div>`;
+}
+
+function renderEmbed(){
+  let html = '<div style="margin-bottom:20px;">';
+  state.chunks.forEach((c,i)=>{
+    html += `<div class="vec-row">
+      <span class="badge" style="background:${DOC_COLORS[c.docId]}22; color:${DOC_COLORS[c.docId]}">${c.id}</span>
+      ${vectorFingerprintHTML(state.chunkVectors[i])}
+      <span style="font-size:11px; color:var(--text-dim); font-family:'JetBrains Mono',monospace;">${state.vocab.length}-dim TF‑IDF vector</span>
+    </div>`;
+  });
+  html += '</div>';
+  html += renderScatter(false);
+  return html;
+}
+
+function renderScatter(showQuery, highlightTopK){
+  const pts = state.chunks.map((c,i)=>({ id:c.id, docId:c.docId, x:state.chunkPoints[i][0], y:state.chunkPoints[i][1] }));
+  let allX = pts.map(p=>p.x), allY = pts.map(p=>p.y);
+  if(showQuery){ allX.push(state.queryPoint[0]); allY.push(state.queryPoint[1]); }
+  const minX=Math.min(...allX), maxX=Math.max(...allX), minY=Math.min(...allY), maxY=Math.max(...allY);
+  const pad=36, W=560, H=340;
+  const sx = v => pad + ( (v-minX) / ((maxX-minX)||1) ) * (W-2*pad);
+  const sy = v => pad + ( (v-minY) / ((maxY-minY)||1) ) * (H-2*pad);
+
+  let lines = '';
+  let circles = '';
+  const topIds = highlightTopK ? new Set(state.ranked.filter(r=>r.isTop).map(r=>r.chunk.id)) : null;
+
+  pts.forEach(p=>{
+    const cx = sx(p.x), cy = sy(p.y);
+    const isTop = topIds ? topIds.has(p.id) : true;
+    const op = topIds ? (isTop ? 1 : 0.22) : 0.9;
+    if(showQuery && isTop && topIds){
+      const qx = sx(state.queryPoint[0]), qy = sy(state.queryPoint[1]);
+      lines += `<line x1="${qx}" y1="${qy}" x2="${cx}" y2="${cy}" stroke="${DOC_COLORS[p.docId]}" stroke-width="1.4" stroke-dasharray="4 3" opacity="0.8"><animate attributeName="stroke-dashoffset" from="20" to="0" dur="1s" repeatCount="indefinite"/></line>`;
+    }
+    circles += `<circle cx="${cx}" cy="${cy}" r="7" fill="${DOC_COLORS[p.docId]}" opacity="${op}" stroke="#0a0c11" stroke-width="1.5"><title>${p.id}</title></circle>`;
+  });
+
+  let queryMarker = '';
+  if(showQuery){
+    const qx = sx(state.queryPoint[0]), qy = sy(state.queryPoint[1]);
+    queryMarker = `<g transform="translate(${qx},${qy}) rotate(45)">
+      <rect x="-8" y="-8" width="16" height="16" fill="#fff" stroke="var(--primary)" stroke-width="2"/>
+    </g>`;
+  }
+
+  const legendDocs = CORPUS.map(d=>`<div class="legend-item"><span class="legend-dot" style="background:${DOC_COLORS[d.id]}"></span>${escapeHtml(d.title)}</div>`).join('');
+  const legendQuery = showQuery ? `<div class="legend-item query"><span class="legend-dot" style="background:#fff; border:2px solid var(--primary)"></span>Your question</div>` : '';
+
+  return `<div class="scatter-wrap">
+    <div class="scatter-box">
+      <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}">
+        ${lines}
+        ${circles}
+        ${queryMarker}
+      </svg>
+    </div>
+    <div class="legend">${legendQuery}${legendDocs}
+      <div style="margin-top:8px; font-size:11px; color:var(--text-dim); line-height:1.5;">Simplified 2D projection of the vector space — points closer together share more vocabulary.</div>
+    </div>
+  </div>`;
+}
+
+function renderQuery(){
+  let html = `<div class="rank-item" style="margin-bottom:20px;">
+    <div class="rank-doc" style="margin-bottom:8px;">Question</div>
+    <div class="rank-text" style="font-size:14px; color:var(--text);">"${escapeHtml(state.query)}"</div>
+  </div>`;
+  html += `<div class="vec-row" style="margin-bottom:18px;">
+    <span class="badge" style="background:var(--primary-soft); color:var(--primary)">query vector</span>
+    ${vectorFingerprintHTML(state.queryVector)}
+    <span style="font-size:11px; color:var(--text-dim); font-family:'JetBrains Mono',monospace;">tokens: ${state.queryTokens.map(escapeHtml).join(', ') || '(none matched vocabulary)'}</span>
+  </div>`;
+  html += renderScatter(true, false);
+  return html;
+}
+
+function renderRetrieve(){
+  let html = renderScatter(true, true);
+  html += '<div class="rank-list" style="margin-top:22px;">';
+  state.ranked.forEach(r=>{
+    const pct = Math.max(0, Math.min(100, r.score*100));
+    html += `<div class="rank-item ${r.isTop?'top':''}">
+      <div class="rank-top">
+        <span class="rank-doc"><span class="dot" style="background:${DOC_COLORS[r.chunk.docId]}"></span>${escapeHtml(r.chunk.docTitle)} · ${r.chunk.id}${r.isTop?'<span class="badge">retrieved</span>':''}</span>
+        <span class="rank-score">${r.score.toFixed(3)}</span>
+      </div>
+      <div class="rank-bar-bg"><div class="rank-bar-fill" style="width:${pct}%"></div></div>
+      <div class="rank-text">${escapeHtml(r.chunk.text)}</div>
+    </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function buildPrompt(){
+  const top = state.ranked.filter(r=>r.isTop);
+  let ctx = top.map((r,i)=> `[${i+1}] (${r.chunk.docTitle}) ${r.chunk.text}`).join('\n\n');
+  return {
+    system:"You are a helpful assistant. Answer the user's question using ONLY the information in the context below. If the answer isn't in the context, say you don't know.",
+    context: ctx,
+    question: state.query,
+    top
+  };
+}
+
+function renderAugment(){
+  const p = buildPrompt();
+  const html = `<div class="code-block"><span class="tag">SYSTEM:</span> ${escapeHtml(p.system)}
+
+<span class="tag">CONTEXT:</span>
+${p.top.map((r,i)=>`<span class="ctx">[${i+1}]</span> <span class="src">(${escapeHtml(r.chunk.docTitle)})</span> ${escapeHtml(r.chunk.text)}`).join('\n\n')}
+
+<span class="q">QUESTION:</span> ${escapeHtml(p.question)}</div>
+  <p class="caption" style="margin-top:16px; margin-bottom:0;">This is the exact text that gets sent to the language model — the original question plus the top‑${state.topK} retrieved chunks, wrapped in an instruction telling it to stay grounded in the provided context.</p>`;
+  return html;
+}
+
+function simulateGeneration(){
+  const p = buildPrompt();
+  const qTokens = new Set(state.queryTokens);
+  const picks = p.top.map(r=>{
+    const sentences = splitSentences(r.chunk.text);
+    let best = sentences[0], bestScore = -1;
+    sentences.forEach(sen=>{
+      const score = tokenize(sen).filter(t=>qTokens.has(t)).length;
+      if(score > bestScore){ bestScore = score; best = sen; }
+    });
+    return { doc:r.chunk.docTitle, sentence:best.trim(), score:bestScore };
+  }).filter(p=>p.score>0);
+
+  const finalPicks = picks.length ? picks : p.top.slice(0,1).map(r=>({doc:r.chunk.docTitle, sentence: splitSentences(r.chunk.text)[0], score:0}));
+  return finalPicks;
+}
+
+function renderGenerate(){
+  const picks = simulateGeneration();
+  const answerText = picks.map((pk,i)=> `${escapeHtml(pk.sentence)}<span class="cite">[${i+1}]</span>`).join(' ');
+  const sources = picks.map((pk,i)=> `<div>[${i+1}] ${escapeHtml(pk.doc)}</div>`).join('');
+
+  return `<div class="answer-box">
+    <span class="sim-tag">Simulated generation — not a live model call</span>
+    <div>${answerText}</div>
+    <div class="sources">${sources}</div>
+  </div>
+  <p class="caption" style="margin-top:16px; margin-bottom:0;">A real LLM would read the augmented prompt from the previous step and write a fluent, original answer grounded in that context. This simulator instead extracts the sentences most relevant to your question from the retrieved chunks, so you can see that the answer traces directly back to specific, cited passages — the core guarantee RAG is designed to provide.</p>`;
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+function toggleInfo(){
+  document.getElementById('infoPanel').classList.toggle('show');
+}
+function initChips(){
+  const el = document.getElementById('exampleChips');
+  el.innerHTML = EXAMPLE_QUERIES.map(q=>`<span class="chip" onclick="useExample('${q.replace(/'/g,"\\'")}')">${escapeHtml(q)}</span>`).join('');
+}
+function useExample(q){
+  document.getElementById('queryInput').value = q;
+  runPipeline();
+}
+renderStepper();
+initChips();
+</script>
+</body>
+</html>
