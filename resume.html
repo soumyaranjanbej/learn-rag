@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soumya Ranjan Bej — Resume</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#15191c;
+    --paper:#f6f4ef;
+    --amber:#e2a63b;
+    --teal:#1f6f6b;
+    --text-dark:#2b2f33;
+    --text-light:#ece9e2;
+    --muted-on-dark:#9aa0a4;
+    --muted-on-light:#7a7f83;
+    --line:#dcd7ca;
+    --line-dark:#2a2f33;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+
+  html,body{
+    background:#0e1113;
+    color:var(--text-dark);
+    font-family:'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .page{
+    max-width:1050px;
+    min-height:100vh;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:280px 1fr;
+    background:var(--paper);
+    box-shadow:0 0 60px rgba(0,0,0,0.35);
+  }
+
+  /* ===== SIDEBAR ===== */
+  .sidebar{
+    background:var(--ink);
+    color:var(--text-light);
+    padding:40px 28px;
+    position:relative;
+    background-image:
+      linear-gradient(var(--line-dark) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line-dark) 1px, transparent 1px);
+    background-size:24px 24px;
+    background-position:-1px -1px;
+  }
+  .sidebar::after{
+    content:"";
+    position:absolute; top:0; right:0; bottom:0; width:1px;
+    background:linear-gradient(var(--amber), var(--teal));
+    opacity:0.7;
+  }
+
+  .name{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:26px;
+    line-height:1.15;
+    letter-spacing:-0.01em;
+    color:#fff;
+  }
+  .title{
+    margin-top:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    line-height:1.55;
+    color:var(--amber);
+    letter-spacing:0.01em;
+  }
+
+  .sb-rule{
+    height:2px; width:36px;
+    background:var(--amber);
+    margin:20px 0 22px;
+  }
+
+  .sb-section{ margin-bottom:26px; }
+  .sb-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9.5px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--teal);
+    margin-bottom:10px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .sb-label::before{
+    content:"";
+    width:6px; height:6px;
+    background:var(--teal);
+    display:inline-block;
+    transform:rotate(45deg);
+  }
+
+  .contact-list{ list-style:none; display:flex; flex-direction:column; gap:7px; }
+  .contact-list li{
+    font-size:11.5px;
+    color:var(--text-light);
+    display:flex; gap:8px; align-items:baseline;
+  }
+  .contact-list .k{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9px;
+    color:var(--muted-on-dark);
+    width:38px; flex-shrink:0;
+  }
+  .contact-list a{ color:var(--text-light); text-decoration:none; word-break:break-all; }
+  .contact-list a:hover{ color:var(--amber); }
+
+  .chip-row{ display:flex; flex-wrap:wrap; gap:6px; }
+  .chip{
+    font-size:10.5px;
+    font-family:'IBM Plex Mono', monospace;
+    color:var(--text-light);
+    border:1px solid #3a4045;
+    padding:4px 9px;
+    border-radius:2px;
+    background:rgba(255,255,255,0.02);
+  }
+
+  .edu-item, .honor-item{ margin-bottom:12px; }
+  .edu-item:last-child, .honor-item:last-child{ margin-bottom:0; }
+  .edu-degree{ font-size:12px; font-weight:600; color:#fff; line-height:1.3; }
+  .edu-school{ font-size:11px; color:var(--muted-on-dark); margin-top:2px; line-height:1.35; }
+  .edu-minor{
+    font-size:10px; color:var(--muted-on-dark); margin-top:8px;
+    padding-top:8px; border-top:1px dashed #2a2f33; line-height:1.5;
+  }
+
+  .honor-item{ font-size:11.5px; color:var(--text-light); display:flex; justify-content:space-between; gap:6px; }
+  .honor-item .count{ font-family:'IBM Plex Mono', monospace; color:var(--amber); font-size:10px; }
+
+  /* ===== MAIN ===== */
+  .main{ padding:42px 44px 40px; }
+
+  .summary{
+    font-size:12.5px;
+    line-height:1.65;
+    color:var(--text-dark);
+    padding-bottom:26px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:30px;
+  }
+  .summary .lede{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    color:var(--ink);
+  }
+
+  .section-head{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color:var(--teal);
+    margin-bottom:20px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .section-head::after{
+    content:""; flex:1; height:1px; background:var(--line);
+  }
+
+  .timeline{ position:relative; padding-left:22px; }
+  .timeline::before{
+    content:"";
+    position:absolute; left:4px; top:6px; bottom:6px;
+    width:1px;
+    background:linear-gradient(var(--amber), var(--line) 15%, var(--line) 85%, var(--teal));
+  }
+
+  .job{ position:relative; padding-bottom:22px; }
+  .job:last-child{ padding-bottom:0; }
+  .job::before{
+    content:"";
+    position:absolute; left:-22px; top:4px;
+    width:9px; height:9px;
+    background:var(--paper);
+    border:2px solid var(--amber);
+    transform:rotate(45deg);
+  }
+  .job.founder::before{ border-color:var(--teal); }
+
+  .job-top{
+    display:flex; justify-content:space-between; align-items:baseline;
+    gap:14px; flex-wrap:wrap; margin-bottom:3px;
+  }
+  .job-role{ font-size:14px; font-weight:600; color:var(--ink); font-family:'Space Grotesk', sans-serif; }
+  .job-meta{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    color:var(--muted-on-light);
+    white-space:nowrap;
+  }
+  .job-company{
+    font-size:11.5px; color:var(--teal); font-weight:600; margin-bottom:6px;
+  }
+  .job-company .loc{ color:var(--muted-on-light); font-weight:400; }
+  .job-desc{ font-size:11.5px; line-height:1.55; color:var(--text-dark); max-width:60ch; }
+
+  @media print{
+    html,body{ background:#fff; }
+    .page{ box-shadow:none; max-width:100%; }
+    @page{ size:Letter; margin:0; }
+  }
+
+  @media (max-width:720px){
+    .page{ grid-template-columns:1fr; }
+    .sidebar::after{ display:none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <aside class="sidebar">
+    <div class="name">Soumya Ranjan<br>Bej</div>
+    <div class="title">Senior Product Manager — Enterprise IoT &amp; Energy Storage<br>Technical PM with Engineering DNA</div>
+    <div class="sb-rule"></div>
+
+    <div class="sb-section">
+      <div class="sb-label">Contact</div>
+      <ul class="contact-list">
+        <li><span class="k">Loc</span><span>Livermore · SF Bay Area</span></li>
+        <li><span class="k">Tel</span><span>+1 (213) 235-7056</span></li>
+        <li><span class="k">Mail</span><a href="mailto:sranjan2005@gmail.com">sranjan2005@gmail.com</a></li>
+        <li><span class="k">In</span><a href="https://www.linkedin.com/in/soumyaranjanbej" target="_blank" rel="noopener">linkedin.com/in/soumyaranjanbej</a></li>
+      </ul>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Top Skills</div>
+      <div class="chip-row">
+        <span class="chip">Product Vision</span>
+        <span class="chip">Team Leadership</span>
+        <span class="chip">Product Strategy</span>
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Education</div>
+      <div class="edu-item">
+        <div class="edu-degree">MBA, Business Administration &amp; Management</div>
+        <div class="edu-school">UC Berkeley, Haas School of Business</div>
+      </div>
+      <div class="edu-item">
+        <div class="edu-degree">Business Analytics Specialization</div>
+        <div class="edu-school">University of Pennsylvania</div>
+      </div>
+      <div class="edu-item">
+        <div class="edu-degree">B.Tech, Computer Science &amp; Engineering</div>
+        <div class="edu-school">National Institute of Science &amp; Technology (Autonomous, NBA &amp; NAAC Accredited)</div>
+      </div>
+      <div class="edu-minor">Ispat English Medium School — Physics, Chemistry, Maths · St. Paul's School, Rourkela</div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Honors &amp; Awards</div>
+      <div class="honor-item"><span>Star Award</span><span class="count">×2</span></div>
+      <div class="honor-item"><span>TMT-Excellence Award</span></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <p class="summary">
+      <span class="lede">Product leader with 16+ years of experience</span> building connected hardware-software platforms across distributed energy systems, industrial IoT, and cloud platforms. Proven track record owning platform strategy, fleet orchestration, device lifecycle management, and cloud-based control systems supporting 100K+ connected assets. Experienced in aligning hardware, firmware, cloud, and commercial teams to ship scalable, customer-facing energy products in regulated environments.
+    </p>
+
+    <div class="section-head">Experience</div>
+    <div class="timeline">
+
+      <div class="job">
+        <div class="job-top">
+          <span class="job-role">Senior Product Manager</span>
+          <span class="job-meta">Jul 2023 — Present · 3 yr 1 mo</span>
+        </div>
+        <div class="job-company">TAE Power Solutions <span class="loc">· California, United States</span></div>
+        <p class="job-desc">Drive clean energy initiatives by leveraging Cloud/IoT technologies.</p>
+      </div>
+
+      <div class="job">
+        <div class="job-top">
+          <span class="job-role">Product Manager | IoT Technical Solutions Expert</span>
+          <span class="job-meta">Mar 2020 — Jun 2023 · 3 yr 4 mo</span>
+        </div>
+        <div class="job-company">Vodafone <span class="loc">· Redwood City, CA</span></div>
+        <p class="job-desc">Managed and developed end-to-end solutions for customers using open-source, AWS, GCP, and Vodafone's IoT platform.</p>
+      </div>
+
+      <div class="job">
+        <div class="job-top">
+          <span class="job-role">Solution Architect / Lead Consultant</span>
+          <span class="job-meta">Nov 2014 — Mar 2020 · 5 yr 5 mo</span>
+        </div>
+        <div class="job-company">ITC Infotech <span class="loc">· Santa Rosa, California</span></div>
+        <p class="job-desc">Technical Lead through ITC Infotech partnered jointly with PTC (Parametric Technology Corporation); led 18–24 members. Primary contact for Keysight &amp; IoT deliverables.</p>
+      </div>
+
+      <div class="job founder">
+        <div class="job-top">
+          <span class="job-role">Co-Founder</span>
+          <span class="job-meta">Aug 2014 — Dec 2015 · 1 yr 5 mo</span>
+        </div>
+        <div class="job-company">Sygnetech Pvt. Ltd. <span class="loc">· Bhubaneswar, Odisha, India</span></div>
+        <p class="job-desc">Specialized in development and implementation of an RFID-based student attendance system, catering to markets in Odisha and Bangalore, Karnataka.</p>
+      </div>
+
+      <div class="job">
+        <div class="job-top">
+          <span class="job-role">Engineer</span>
+          <span class="job-meta">Oct 2013 — Aug 2014 · 11 mo</span>
+        </div>
+        <div class="job-company">Broadcom</div>
+        <p class="job-desc">Owner for 2G/3G/audio DSP pre-silicon emulation/validation for critical customer delivery.</p>
+      </div>
+
+      <div class="job">
+        <div class="job-top">
+          <span class="job-role">Engineer</span>
+          <span class="job-meta">Nov 2012 — Sep 2013 · 11 mo</span>
+        </div>
+        <div class="job-company">Renesas Electronics</div>
+        <p class="job-desc">Primary developer for GSM front-end modules, ASIP DSP processor, and interaction with hardware accelerators.</p>
+      </div>
+
+      <div class="job">
+        <div class="job-top">
+          <span class="job-role">Project Engineer</span>
+          <span class="job-meta">Feb 2010 — Nov 2012 · 2 yr 10 mo</span>
+        </div>
+        <div class="job-company">Wipro Limited</div>
+        <p class="job-desc">Developer responsible for coding and unit testing L2/L3 protocols for WCDMA base transceiver &amp; Intelligent Services Access Manager (ISAM) box.</p>
+      </div>
+
+      <div class="job founder">
+        <div class="job-top">
+          <span class="job-role">Co-Founder</span>
+          <span class="job-meta">Aug 2009 — Dec 2010 · 1 yr 5 mo</span>
+        </div>
+        <div class="job-company">K-Technologies <span class="loc">· Brahmapur, Odisha, India</span></div>
+        <p class="job-desc">Kalinga Technologies — a pioneering company in Robotics and Embedded Technologies, known for innovative training methods, high-quality products, and exceptional client service.</p>
+      </div>
+
+    </div>
+  </main>
+
+</div>
+</body>
+</html>
